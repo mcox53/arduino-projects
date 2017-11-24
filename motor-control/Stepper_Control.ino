@@ -1,6 +1,9 @@
-/* 
- *  Basic progrm to control a stepper motor with a joystick
+/*  Matthew Cox
+ *  11/22/17
+ *  Description: Basic progrm to control a stepper motor with a joystick
  *  Takes running average of joystick position to smooth control.
+ *  
+ *  Target Device: ATMega328p (Arduino Uno)
  *  
  */
 
@@ -17,32 +20,28 @@ AccelStepper stepper1(HALFSTEP, motorPin1, motorPin3, motorPin2, motorPin4);
 int XPos = 0;
 
 const int arraySize = 10;
-int AverageArray[arraySize];
-int index = 0;
-int average = 0;
-int total;
+int AverageArray[arraySize] = { 0 };
+int average;
 
 void setup() {
-  Serial.begin(9600);
-  
-  for( int i = 0; i < arraySize; i++){
-    AverageArray[i] = 0; // Initialize all elements of array to 0
-  }
+  stepper1.setMaxSpeed(1000.0);
+  stepper1.setAcceleration(200.0);
+}
 
-  stepper1.setMaxSpeed(500.0);
-  stepper1.setAcceleration(50.0);
-  stepper1.setSpeed(100);
-  stepper1.moveTo(20000);
+int AnalogPinAverage(int *values, int sizeOfArray, int analogPin){
+  int index,total = 0;
+  for (int index = 0; index <= sizeOfArray; index++){
+    values[index] = analogRead(analogPin);
+    total += values[index];
+    index++;
+  }
+  int average = total / sizeOfArray;
+  return average;  
 }
 
 void loop() {
-  total -= AverageArray[index];
-  AverageArray[index] = analogRead(XPos);
-  total += AverageArray[index];
-  index++;
-  
-  if( index >= arraySize){
-    index = 0;
-  }
-  average = total / arraySize;
+  // average = AnalogPinAverage(AverageArray, arraySize, XPos);
+  int stepSpeed = map(analogRead(XPos), 0, 1023, -500, 500);
+  stepper1.setSpeed(stepSpeed);
+  stepper1.run();
 }
